@@ -1,0 +1,15 @@
+{
+  "name": "airview",
+  "version": "1.0.0",
+  "description": "Airview - A Docker-based web application for flight tracking display with FlightRadar24 API integration",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.0"
+  }
+}

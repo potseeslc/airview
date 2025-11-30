@@ -1,0 +1,121 @@
+// Flight data integration for OpenSky Network API
+let lastUpdateTime = null;
+let refreshInterval = 30000; // 30 seconds
+
+async function fetchFlightData() {
+    try {
+        const response = await fetch('/api/flights/local');
+        const data = await response.json();
+        
+        console.log('API Response:', data);
+        
+        if (data.success && data.flights && data.flights.length > 0) {
+            displayFlightData(data.flights[0], data.mode, data.source);
+            updateLastUpdateTime(data.source || 'OpenSky Network');
+        } else {
+            console.log('API returned no flights:', data);
+            displayError('No flight data available: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+        displayError('Connection error: ' + error.message);
+    }
+}
+
+function displayFlightData(flight, mode, source) {
+    const container = document.getElementById('flight-container');
+    
+    if (!flight) {
+        container.innerHTML = '\u003cdiv class="no-flights"\u003eNo flight data available\u003c/div\u003e';
+        return;
+    }
+    
+    container.innerHTML = createFlightCard(flight, mode, source);
+}
+
+function createFlightCard(flight, mode, source) {
+    const isLive = mode === 'live';
+    const altitude = Math.round(flight.altitude || 0);
+    const speed = Math.round(flight.speed || 0);
+    const airlineCode = flight.airline || 'Unknown';
+    
+    // Map airline codes to full names
+    const airlineNames = {
+        'UA': 'United Airlines',
+        'AA': 'American Airlines', 
+        'DL': 'Delta Air Lines',
+        'WN': 'Southwest Airlines',
+        'AS': 'Alaska Airlines',
+        'B6': 'JetBlue',
+        'SW': 'Southwest Airlines',
+        'FD': 'FedEx',
+        'DLH': 'Lufthansa',
+        'SKW': 'SkyWest Airlines'
+    };
+    
+    const airlineName = airlineNames[airlineCode] || airlineCode;
+    const flightNumber = flight.flight_number || flight.callsign || 'N/A';
+    
+    return `
+        \u003cdiv class="flight-header"\u003e
+            \u003cdiv class="flight-info"\u003e
+                \u003cdiv class="mode-indicator"\u003e${isLive ? 'LIVE DATA' : 'SAMPLE DATA'}\u003c/div\u003e
+                \u003cdiv class="flight-number"\u003e${flightNumber}\u003c/div\u003e
+                \u003cdiv class="callsign"\u003e${flight.callsign || ''}\u003c/div\u003e
+                \u003cdiv class="route"\u003e${flight.origin_country || 'Unknown'} → ${flight.destination || 'En Route'}\u003c/div\u003e
+                
+                \u003cdiv class="flight-stats"\u003e
+                    \u003cdiv class="stat-item"\u003e
+                        \u003cdiv class="stat-label"\u003eAltitude\u003c/div\u003e
+                        \u003cdiv class="stat-value"\u003e${altitude ? altitude.toLocaleString() + ' ft' : 'N/A'}\u003c/div\u003e
+                    \u003c/div\u003e
+                    \u003cdiv class="stat-item"\u003e
+                        \u003cdiv class="stat-label"\u003eGround Speed\u003c/div\u003e
+                        \u003cdiv class="stat-value"\u003e${speed ? speed + ' kts' : 'N/A'}\u003c/div\u003e
+                    \u003c/div\u003e
+                    \u003cdiv class="stat-item"\u003e
+                        \u003cdiv class="stat-label"\u003eSource\u003c/div\u003e
+                        \u003cdiv class="stat-value"\u003e${source || mode || 'Unknown'}\u003c/div\u003e
+                    \u003c/div\u003e
+                \u003c/div\u003e
+            \u003c/div\u003e
+            
+            \u003cdiv class="logo-container"\u003e
+                \u003cdiv class="logo-image"\u003e
+                    \u003cimg src="/assets/${airlineCode}.png" alt="${airlineName} logo" 
+                         onerror="this.style.display='none'"\u003e
+                \u003c/div\u003e
+                \u003cdiv class="airline-label"\u003e${airlineName}\u003c/div\u003e
+                \u003cdiv class="most-tracked-indicator"\u003e${flight.aircraft_type || 'Aircraft'}\u003c/div\u003e
+            \u003c/div\u003e
+        \u003c/div\u003e
+    `;
+}
+
+function displayError(message) {
+    const container = document.getElementById('flight-container');
+    container.innerHTML = `\u003cdiv class="no-flights" style="color: #f87171;"\u003e${message}\u003c/div\u003e`;
+}
+
+function updateLastUpdateTime(source) {
+    lastUpdateTime = new Date();
+    const timeEl = document.getElementById('refresh-time');
+    if (timeEl) {
+        timeEl.textContent = `Last updated: ${lastUpdateTime.toLocaleTimeString()} (${source})`;
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Flight tracker initialized');
+    fetchFlightData();
+    setInterval(fetchFlightData, refreshInterval);
+});
+
+// Add refresh time element if not exists
+if (!document.getElementById('refresh-time')) {
+    const refreshEl = document.createElement('div');
+    refreshEl.id = 'refresh-time';
+    refreshEl.className = 'refresh-time';
+    document.body.appendChild(refreshEl);
+}

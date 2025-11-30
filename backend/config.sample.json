@@ -1,0 +1,12 @@
+{
+  "home": {
+    "latitude": 39.8121035,
+    "longitude": -105.1125547,
+    "radius": 75,
+    "minAltitude": 10000,
+    "maxAltitude": 45000
+  },
+  "settings": {
+    "refreshInterval": 30000
+  }
+}

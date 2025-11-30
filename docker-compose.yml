@@ -1,0 +1,10 @@
+services:
+  flight-tracker:
+    build: .
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    volumes:
+      - ./backend/config.json:/app/backend/config.json
+    # Add networking to ensure outbound connections work properly
+    network_mode: bridge

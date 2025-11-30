@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Tracker - Admin Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1e293b;
+            color: #e5e7eb;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #374151;
+            padding: 2rem;
+            border-radius: 10px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #60a5fa;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 0.75rem;
+            background: #4b5563;
+            border: 1px solid #6b7280;
+            border-radius: 5px;
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        button {
+            padding: 0.75rem 1.5rem;
+            background: #60a5fa;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #3b82f6;
+        }
+        
+        .status {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .status.success {
+            background: #10b981;
+            display: block;
+        }
+        
+        .status.error {
+            background: #ef4444;
+            display: block;
+        }
+        
+        .links {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .link-btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #7c3aed;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 0 0.5rem;
+        }
+        
+        .current-config {
+            background: #4b5563;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1.5rem;
+        }
+        
+        small {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✈️ Flight Tracker Admin</h1>
+            <p>Configure your flight tracking settings</p>
+        </div>
+        
+        <div class="current-config">
+            <h3>Current Configuration</h3>
+            <div><strong>Location:</strong> <span id="current-location">Loading...</span></div>
+            <div><strong>Search Radius:</strong> <span id="current-radius">Loading...</span></div>
+            <div><strong>Altitude Range:</strong> <span id="current-altitude">Loading...</span></div>
+        </div>
+        
+        <div id="status" class="status"></div>
+        
+        <form id="config-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="latitude">Latitude</label>
+                    <input type="number" id="latitude" step="any" required placeholder="37.7749">
+                </div>
+                <div class="form-group">
+                    <label for="longitude">Longitude</label>
+                    <input type="number" id="longitude" step="any" required placeholder="-122.4194">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="radius">Search Radius (km)</label>
+                <input type="number" id="radius" value="50" min="10" max="200" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="minAltitude">Minimum Altitude (feet)</label>
+                    <input type="number" id="minAltitude" value="5000" min="0" max="60000" step="1000" required>
+                    <small>Filters out low-altitude/local traffic</small>
+                </div>
+                <div class="form-group">
+                    <label for="maxAltitude">Maximum Altitude (feet)</label>
+                    <input type="number" id="maxAltitude" value="40000" min="1000" max="60000" step="1000" required>
+                    <small>Focuses on commercial airline altitudes</small>
+                </div>
+            </div>
+            
+            <button type="submit">Save Configuration</button>
+        </form>
+        
+        <div class="links">
+            <a href="/" class="link-btn">View Flight Display</a>
+            <a href="/admin" class="link-btn">Refresh</a>
+        </div>
+    </div>
+
+    <script>
+        async function loadConfig() {
+            try {
+                const response = await fetch('/admin/config');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const config = data.config.home;
+                    document.getElementById('current-location').textContent = 
+                        `${config.latitude}, ${config.longitude}`;
+                    document.getElementById('current-radius').textContent = 
+                        `${config.radius} km`;
+                    document.getElementById('current-altitude').textContent = 
+                        `${config.minAltitude || 5000} - ${config.maxAltitude || 40000} feet`;
+                    
+                    document.getElementById('latitude').value = config.latitude;
+                    document.getElementById('longitude').value = config.longitude;
+                    document.getElementById('radius').value = config.radius;
+                    document.getElementById('minAltitude').value = config.minAltitude || 5000;
+                    document.getElementById('maxAltitude').value = config.maxAltitude || 40000;
+                }
+            } catch (error) {
+                showStatus('Error loading configuration', 'error');
+            }
+        }
+        
+        async function saveConfig(event) {
+            event.preventDefault();
+            
+            const latitude = parseFloat(document.getElementById('latitude').value);
+            const longitude = parseFloat(document.getElementById('longitude').value);
+            const radius = parseInt(document.getElementById('radius').value);
+            const minAltitude = parseInt(document.getElementById('minAltitude').value);
+            const maxAltitude = parseInt(document.getElementById('maxAltitude').value);
+            
+            if (isNaN(latitude) || isNaN(longitude) || isNaN(radius) || isNaN(minAltitude) || isNaN(maxAltitude)) {
+                showStatus('Please enter valid numbers', 'error');
+                return;
+            }
+            
+            if (minAltitude >= maxAltitude) {
+                showStatus('Minimum altitude must be less than maximum altitude', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/admin/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        home: { 
+                            latitude, 
+                            longitude, 
+                            radius,
+                            minAltitude,
+                            maxAltitude
+                        } 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('Configuration saved successfully!', 'success');
+                    loadConfig();
+                } else {
+                    showStatus(data.message || 'Error saving configuration', 'error');
+                }
+            } catch (error) {
+                showStatus('Error saving configuration', 'error');
+            }
+        }
+        
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 5000);
+        }
+        
+        document.getElementById('config-form').addEventListener('submit', saveConfig);
+        loadConfig();
+    </script>
+</body>
+</html>

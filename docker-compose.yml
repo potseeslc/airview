@@ -1,10 +1,8 @@
 services:
-  flight-tracker:
+  airview:
     build: .
     ports:
-      - "3000:3000"
+      - "8080:80"
     restart: unless-stopped
     volumes:
       - ./backend/config.json:/app/backend/config.json
-    # Add networking to ensure outbound connections work properly
-    network_mode: bridge

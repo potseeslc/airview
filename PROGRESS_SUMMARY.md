@@ -30,7 +30,21 @@ This document summarizes all the enhancements and improvements made to the Fligh
 - Enhanced route display from "AUS → EGE" to "Austin → Eagle"
 - Integrated public airport codes dataset
 
-### 3. Admin Panel Simplification
+### 3. Airline Code Enhancement
+**Problem**: Airline codes like "QF" were displaying as raw codes instead of full airline names.
+
+**Solution**:
+- Created `api/airline-codes.json` with 413 comprehensive airline code mappings
+- Enhanced both backend (FlightRadar24 integration) and frontend (JavaScript display)
+- Specific mapping: QF → Qantas, QFA → Qantas Freight
+- Integrated with existing airline logo system for proper visual display
+
+**Files Created**:
+- `api/airline-codes.json` - Comprehensive airline code mappings
+- `airline-code-test.html` - Interactive browser-based airline code testing
+- `test-airline-codes.js` - Backend verification script
+
+### 4. Admin Panel Simplification
 **Problem**: Admin panel had unnecessary API provider selection dropdown.
 
 **Solution**:
@@ -44,14 +58,16 @@ This document summarizes all the enhancements and improvements made to the Fligh
 - `backend/server.js` - Cleaned configuration handling
 - `README.md` - Updated documentation
 
-### 4. Test and Verification Infrastructure
+### 5. Test and Verification Infrastructure
 **Solution**: Created comprehensive testing tools to verify implementation.
 
 **Files Created**:
 - `icao-test.html` - Browser-based ICAO code testing
 - `f900-demo.html` - Specific F900 enhancement demonstration
 - `aircraft-code-test.html` - Comprehensive aircraft code testing
+- `airline-code-test.html` - Interactive airline code testing interface
 - `test-icao-mapping.js` - Backend verification script
+- `test-airline-codes.js` - Backend airline code verification script
 - `verify-implementation.js` - Complete implementation verification
 - `test-admin-simplification.js` - Admin panel simplification verification
 
@@ -62,11 +78,13 @@ This document summarizes all the enhancements and improvements made to the Fligh
 - `DATA_SOURCES.md` - Documentation of all data sources and update processes
 - `api/icao-codes.json` - Aircraft type mappings (246 entries)
 - `api/airport-codes.json` - Airport code mappings (8,554 entries)
+- `api/airline-codes.json` - Airline code mappings (413 entries)
 
 ### Test/Demo Files
 - `icao-test.html` - Interactive browser-based ICAO code testing
 - `f900-demo.html` - Demonstration of F900 → Dassault Falcon 900 mapping
 - `aircraft-code-test.html` - Comprehensive aircraft code testing interface
+- `airline-code-test.html` - Interactive airline code testing interface
 - `test-frontend.html` - General flight data testing
 
 ### Configuration Files
@@ -88,6 +106,13 @@ This document summarizes all the enhancements and improvements made to the Fligh
 - ✅ Route enhancement displaying full city names
 - ✅ Configuration persistence working
 
+### Airline Code Enhancement
+- ✅ QF correctly maps to "Qantas"
+- ✅ 413 total airline codes in database
+- ✅ Backend integration working
+- ✅ Frontend display enhancement working
+- ✅ Proper airline logo integration
+
 ### Admin Panel Simplification
 - ✅ API provider dropdown removed
 - ✅ Data source fixed to FlightRadar24
@@ -99,7 +124,7 @@ This document summarizes all the enhancements and improvements made to the Fligh
 
 ### Data Sources
 - **Primary**: FlightRadar24 API (public, no authentication required)
-- **Enhancement**: Built-in aircraft type and route enhancement
+- **Enhancement**: Built-in aircraft type, airline name, and route enhancement
 - **Fallback**: Sample data with realistic routes and aircraft types
 
 ### Features
@@ -108,6 +133,7 @@ This document summarizes all the enhancements and improvements made to the Fligh
 - Responsive design for kiosk/screen display
 - Auto-refresh with configurable interval
 - Aircraft type information with full descriptive names
+- Airline name information with full descriptive names
 - Departure and arrival city information for flights
 - Admin panel for configuration (FlightRadar24 only)
 

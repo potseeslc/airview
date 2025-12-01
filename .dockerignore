@@ -2,8 +2,6 @@
 .gitignore
 node_modules
 npm-debug.log
-README.md
-*.md
 run.sh
 setup-kiosk.sh
 flight-tracker.tar

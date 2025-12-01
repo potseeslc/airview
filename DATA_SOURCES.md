@@ -52,6 +52,32 @@ node update-data-sources.js
 ### Integration
 The data is stored in `api/airport-codes.json` and used by the backend FlightRadar24 integration to enhance airport names in routes.
 
+## Airline Codes (IATA/ICAO)
+
+### Source
+- **Comprehensive Airline Database**: Custom compiled from multiple sources
+- **Format**: JSON with airline code to full name mappings
+- **Entries**: ~400+ airline codes with full names
+
+### Update Process
+The data is manually maintained in `api/airline-codes.json`:
+
+```bash
+# The data is stored directly in the JSON file
+cat api/airline-codes.json
+```
+
+### Examples
+| Airline Code | Full Name |
+|--------------|-----------|
+| QF | Qantas |
+| UA | United Airlines |
+| AA | American Airlines |
+| DL | Delta Air Lines |
+
+### Integration
+The data is stored in `api/airline-codes.json` and used by both the backend and frontend to enhance airline names in flight displays.
+
 ## Testing
 
 ### Test Files

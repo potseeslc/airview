@@ -7,9 +7,10 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// Load airport and aircraft mappings
+// Load airport, aircraft, and airline mappings
 const airportCodes = JSON.parse(fs.readFileSync(path.join(__dirname, 'airport-codes.json'), 'utf8'));
 const icaoCodes = JSON.parse(fs.readFileSync(path.join(__dirname, 'icao-codes.json'), 'utf8'));
+const airlineCodes = JSON.parse(fs.readFileSync(path.join(__dirname, 'airline-codes.json'), 'utf8'));
 
 class FlightRadar24API {
     constructor() {

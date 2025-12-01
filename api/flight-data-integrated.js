@@ -6,16 +6,21 @@ const refreshInterval = 30000;
 const HOME_LAT = 39.8121035;
 const HOME_LON = -105.1125547;
 
-// Load ICAO code mappings for aircraft type enhancement
+// Load code mappings for aircraft type and airline name enhancement
 let icaoCodes = {};
+let airlineCodes = {};
 
-async function loadICAOCodeMappings() {
+async function loadCodeMappings() {
     try {
-        const response = await fetch('/api/icao-codes.json');
-        icaoCodes = await response.json();
+        const icaoResponse = await fetch('/api/icao-codes.json');
+        icaoCodes = await icaoResponse.json();
         console.log(`Loaded ${Object.keys(icaoCodes).length} aircraft type mappings`);
+        
+        const airlineResponse = await fetch('/api/airline-codes.json');
+        airlineCodes = await airlineResponse.json();
+        console.log(`Loaded ${Object.keys(airlineCodes).length} airline name mappings`);
     } catch (error) {
-        console.error('Failed to load ICAO code mappings:', error);
+        console.error('Failed to load code mappings:', error);
     }
 }
 
@@ -145,7 +150,7 @@ function createFlightCard(flight, sourceDisplay, aircraftDisplay, routeDisplay) 
     
     // Determine display flight number and airline name
     let displayFlightNumber = flightNumber;
-    let airlineName = airlineNames[airlineCode] || airlineCode;
+    let airlineName = airlineCodes[airlineCode] || airlineNames[airlineCode] || airlineCode;
     let airlineIATACode = airlineIATACodes[airlineCode] || airlineCode;
     
     // Special handling for private aircraft
@@ -212,7 +217,7 @@ function updateLastUpdateTime(source) {
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Flight tracker with FlightRadar24 enhancement initialized');
-    loadICAOCodeMappings().then(() => {
+    loadCodeMappings().then(() => {
         fetchFlightData();
         setInterval(fetchFlightData, refreshInterval);
     });

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Airline Code Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; }
+        .search-box { margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .results { margin-top: 20px; }
+        .result-item { padding: 10px; border-bottom: 1px solid #eee; }
+        .result-code { font-weight: bold; color: #007cba; }
+        .result-name { margin-left: 10px; }
+        .no-results { text-align: center; color: #999; padding: 20px; }
+        .test-section { margin: 30px 0; }
+        .test-header { background: #007cba; color: white; padding: 10px; border-radius: 4px; }
+        .test-content { padding: 15px; border: 1px solid #ddd; border-top: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✈️ Airline Code Test</h1>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search for airline codes (e.g. QF, UA, DL)..." oninput="searchAirlines()">
+        </div>
+        
+        <div class="results" id="results">
+            <!-- Results will be displayed here -->
+        </div>
+        
+        <div class="test-section">
+            <div class="test-header">
+                <h3>Test Results</h3>
+            </div>
+            <div class="test-content">
+                <p id="testResult">Loading airline codes...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let airlineCodes = {};
+        
+        // Load airline codes
+        fetch('/api/airline-codes.json')
+            .then(response => response.json())
+            .then(data => {
+                airlineCodes = data;
+                document.getElementById('testResult').innerHTML = 
+                    `✅ Successfully loaded ${Object.keys(airlineCodes).length} airline codes<br>
+                     ✅ Examples: QF = ${airlineCodes['QF']}, UA = ${airlineCodes['UA']}, DL = ${airlineCodes['DL']}`;
+                searchAirlines(); // Show all results initially
+            })
+            .catch(error => {
+                document.getElementById('testResult').innerHTML = 
+                    `❌ Error loading airline codes: ${error.message}`;
+            });
+        
+        function searchAirlines() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const resultsContainer = document.getElementById('results');
+            
+            // Filter airlines based on search term
+            const filteredAirlines = Object.entries(airlineCodes).filter(([code, name]) => 
+                code.toLowerCase().includes(searchTerm) || name.toLowerCase().includes(searchTerm)
+            );
+            
+            if (filteredAirlines.length === 0) {
+                resultsContainer.innerHTML = '<div class="no-results">No airlines found matching your search.</div>';
+                return;
+            }
+            
+            // Display results
+            resultsContainer.innerHTML = filteredAirlines
+                .map(([code, name]) => 
+                    `<div class="result-item">
+                        <span class="result-code">${code}</span>
+                        <span class="result-name">${name}</span>
+                    </div>`
+                )
+                .join('');
+        }
+    </script>
+</body>
+</html>

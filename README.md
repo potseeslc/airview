@@ -166,6 +166,21 @@ For more details on data architecture decisions, see:
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
+## Developed with Goose
+
+This project was developed with [Goose](https://block.github.io/goose/), an open-source AI agent created by Block, Inc. Goose was used to implement the comprehensive airline code enhancement, data architecture analysis, and deployment automation for this project.
+
+**AI Model Used**: This project was developed using a self-hosted Ollama instance running the `qwen-coder:480b-cloud` model.
+
+Goose enabled rapid development of complex features including:
+- Implementation of 413 airline codes with full names
+- Data architecture analysis and scalability framework
+- Performance benchmarking tools
+- Database migration templates
+- Automated deployment to GitHub and Docker Hub
+
+Learn more about Goose at [https://block.github.io/goose/](https://block.github.io/goose/)
+
 ## Contributing
 
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.

@@ -20,8 +20,8 @@ app.use(express.json());
 const CONFIG_FILE = path.join(__dirname, 'config.json');
 const defaultConfig = {
     home: { 
-        latitude: 39.8121035, 
-        longitude: -105.1125547, 
+        latitude: 40.7484405, 
+        longitude: -73.9856644, 
         radius: 75,
         minAltitude: 10000,
         maxAltitude: 45000

@@ -20,18 +20,46 @@ Airview is a Docker-based web application that displays flight information in a 
 
 ## Quick Start
 
-### Using Docker (Recommended)
+### Using Docker (Simplest Option)
 
 ```bash
-# Pull the image from Docker Hub
-docker pull potseeslc/airview
-
-# Run the container
+# Run the container with default settings (Empire State Building location)
 docker run -d \
   --name airview \
-  -p 8080:80 \
+  -p 3000:3000 \
+  potseeslc/airview:latest
+```
+
+Access the application at `http://localhost:3000`
+
+### Using Docker (With Custom Configuration)
+
+If you want to use a custom location, create a `config.json` file first:
+
+```bash
+# Create a basic config file
+echo '{
+  "home": {
+    "latitude": 40.7484405,
+    "longitude": -73.9856644,
+    "radius": 75,
+    "minAltitude": 10000,
+    "maxAltitude": 45000
+  },
+  "settings": {
+    "refreshInterval": 60000
+  }
+}' > config.json
+```
+
+Then run the container with the config file:
+
+```bash
+docker run -d \
+  --name airview \
+  -p 3000:3000 \
   -v ./config.json:/app/backend/config.json \
-  potseeslc/airview
+  potseeslc/airview:latest
 ```
 
 ### Using Docker Compose
@@ -42,9 +70,9 @@ Create a `docker-compose.yml` file:
 version: '3.8'
 services:
   airview:
-    image: potseeslc/airview
+    image: potseeslc/airview:latest
     ports:
-      - "8080:80"
+      - "3000:3000"
     volumes:
       - ./config.json:/app/backend/config.json
     restart: unless-stopped
@@ -58,24 +86,11 @@ docker-compose up -d
 
 ### Configuration
 
-Create a `config.json` file:
+The default location is set to the Empire State Building in New York City:
+- Latitude: 40.7484405
+- Longitude: -73.9856644
 
-```json
-{
-  "home": {
-    "latitude": 39.8121035,
-    "longitude": -105.1125547,
-    "radius": 75,
-    "minAltitude": 10000,
-    "maxAltitude": 45000
-  },
-  "settings": {
-    "refreshInterval": 30000
-  }
-}
-```
-
-Access the application at `http://localhost:8080`
+You can change this through the admin panel at `http://localhost:3000/admin` or by modifying the config.json file.
 
 ## Project Structure
 
@@ -116,7 +131,7 @@ Access the application at `http://localhost:8080`
    npm start
    ```
 
-5. Visit `http://localhost:8080`
+5. Visit `http://localhost:3000`
 
 ## License
 

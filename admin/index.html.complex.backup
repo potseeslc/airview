@@ -143,8 +143,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="/assets/app-logo/airviewlogo.png" alt="Airview Logo" style="max-width: 150px; height: auto; margin-bottom: 1rem;">
-            <h1>Flight Tracker Admin</h1>
+            <h1>✈️ Flight Tracker Admin</h1>
+            <p>Configure your flight tracking settings</p>
         </div>
         
         <div class="current-config">

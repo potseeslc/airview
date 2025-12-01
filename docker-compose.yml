@@ -2,7 +2,9 @@ services:
   airview:
     build: .
     ports:
-      - "8080:80"
+      - "3000:3000"
     restart: unless-stopped
     volumes:
       - ./backend/config.json:/app/backend/config.json
+    environment:
+      - PORT=3000

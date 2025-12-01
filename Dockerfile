@@ -13,5 +13,5 @@ COPY requirements.txt .
 RUN pip3 install --break-system-packages git+https://github.com/openskynetwork/opensky-api.git#subdirectory=python && \
     pip3 install --break-system-packages requests
 
-EXPOSE 80
+EXPOSE 3000
 CMD ["npm", "start"]

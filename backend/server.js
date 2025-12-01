@@ -10,17 +10,11 @@ const { spawn } = require('child_process');
 const FlightRadar24API = require('../api/flightradar24-integration');
 
 const app = express();
-const PORT = process.env.PORT || 80;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-// Serve static files from multiple directories
-app.use(express.static(path.join(__dirname, '..')));
-app.use('/api', express.static(path.join(__dirname, '../api')));
-app.use('/html', express.static(path.join(__dirname, '../html')));
-app.use('/admin', express.static(path.join(__dirname, '../admin')));
-app.use('/assets', express.static(path.join(__dirname, '../assets')));
 
 // Configuration
 const CONFIG_FILE = path.join(__dirname, 'config.json');
@@ -37,165 +31,158 @@ const defaultConfig = {
     }
 };
 
+// Load configuration from file or use default
 function loadConfig() {
     try {
         if (fs.existsSync(CONFIG_FILE)) {
-            return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+            const configFile = fs.readFileSync(CONFIG_FILE, 'utf8');
+            return { ...defaultConfig, ...JSON.parse(configFile) };
+        } else {
+            console.log('Config file not found, using defaults and creating new config file');
+            saveConfig(defaultConfig);
+            return defaultConfig;
         }
-        return defaultConfig;
     } catch (error) {
+        console.error('Error loading config, using defaults:', error.message);
         return defaultConfig;
     }
 }
 
+// Save configuration to file
 function saveConfig(config) {
     try {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
         return true;
     } catch (error) {
+        console.error('Error saving config:', error.message);
         return false;
     }
 }
 
+// Validate coordinates
 function validateCoordinates(lat, lon) {
-    if (Math.abs(lat) > 90) throw new Error(`Invalid latitude: ${lat}`);
-    if (Math.abs(lon) > 180) throw new Error(`Invalid longitude: ${lon}`);
-    return true;
-}
-
-// Calculate distance between two points using Haversine formula
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 3958.8; // Earth radius in miles
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-        Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
-
-let config = loadConfig();
-
-// FlightRadar24 API caching for rate limiting
-let flightRadar24FlightsCache = null;
-let lastFlightRadar24Fetch = 0;
-const FLIGHTRADAR24_CACHE_INTERVAL = 30000; // 30 seconds
-
-// FlightRadar24 API implementation (no authentication required)
-async function getFlightRadar24Flights(lat, lon, radius, minAltitude = 10000, maxAltitude = 45000) {
-    // Check cache first
-    if (flightRadar24FlightsCache && (Date.now() - lastFlightRadar24Fetch) < FLIGHTRADAR24_CACHE_INTERVAL) {
-        console.log(`📦 Using cached FlightRadar24 data (cache age: ${Date.now() - lastFlightRadar24Fetch}ms)`);
-        return flightRadar24FlightsCache;
+    if (isNaN(lat) || isNaN(lon)) {
+        throw new Error('Coordinates must be valid numbers');
     }
     
-    try {
-        console.log(`🔍 Requesting FlightRadar24 API for lat=${lat}, lon=${lon}, radius=${radius}km`);
-        
-        // Calculate bounding box
-        const latDelta = radius / 111.0;
-        const lonDelta = radius / (111.0 * Math.abs(Math.cos(lat * Math.PI/180)));
-        
-        const latMin = lat - latDelta;
-        const latMax = lat + latDelta;
-        const lonMin = lon - lonDelta;
-        const lonMax = lon + lonDelta;
-        
-        // Create FlightRadar24 API client
-        const fr24 = new FlightRadar24API();
-        
-        // Get flights within bounds
-        const flights = await fr24.getFlightsInBounds(latMin, latMax, lonMin, lonMax);
-        
-        if (flights && flights.length > 0) {
-            console.log(`📊 FlightRadar24 API returned ${flights.length} total aircraft`);
-            
-            // Filter flights based on altitude and other criteria
-            const filteredFlights = flights
-                .filter(flight => 
-                    flight.altitude >= minAltitude && 
-                    flight.altitude <= maxAltitude &&
-                    flight.latitude && flight.longitude && // Valid coordinates
-                    !flight.on_ground // Only airborne flights
-                );
-            
-            console.log(`✅ FlightRadar24 API returned ${filteredFlights.length} filtered flights`);
-            
-            // Update cache
-            flightRadar24FlightsCache = filteredFlights;
-            lastFlightRadar24Fetch = Date.now();
-            return filteredFlights;
-        }
-    } catch (error) {
-        console.log('❌ FlightRadar24 API failed:', error.message);
+    if (lat < -90 || lat > 90) {
+        throw new Error('Latitude must be between -90 and 90');
     }
-    return null;
+    
+    if (lon < -180 || lon > 180) {
+        throw new Error('Longitude must be between -180 and 180');
+    }
 }
 
-// Main flight data fetching function - simplified for FlightRadar24 only
-async function fetchFlights(lat, lon, radius, minAltitude, maxAltitude) {
-    console.log(`🛫 Using FlightRadar24 API`);
+// Generate realistic sample flight data
+function generateRealisticFlights(lat, lon, count) {
+    const flights = [];
+    const airlines = ['UA', 'AA', 'DL', 'WN', 'B6', 'NK', 'F9'];
+    const aircraftTypes = ['Boeing 737', 'Airbus A320', 'Boeing 787', 'Airbus A350', 'Boeing 777', 'Embraer E175'];
+    const origins = ['DEN', 'LAX', 'SFO', 'ORD', 'JFK', 'ATL'];
+    const destinations = ['PHX', 'SEA', 'MSP', 'BOS', 'MIA', 'DFW'];
     
-    let apiFlights = await getFlightRadar24Flights(lat, lon, radius, minAltitude, maxAltitude);
-    
-    // Sort flights by distance from the specified location (closest first)
-    if (apiFlights && apiFlights.length > 0) {
-        console.log(`📏 Sorting ${apiFlights.length} flights by distance from (${lat}, ${lon})`);
+    for (let i = 0; i < count; i++) {
+        // Generate coordinates slightly offset from the center
+        const offsetLat = lat + (Math.random() - 0.5) * 0.1;
+        const offsetLon = lon + (Math.random() - 0.5) * 0.1;
         
-        apiFlights.sort((a, b) => {
-            const distA = calculateDistance(lat, lon, a.latitude, a.longitude);
-            const distB = calculateDistance(lat, lon, b.latitude, b.longitude);
-            return distA - distB;
-        });
+        const airline = airlines[Math.floor(Math.random() * airlines.length)];
+        const flightNumber = `${airline}${Math.floor(Math.random() * 9000) + 1000}`;
+        const aircraftType = aircraftTypes[Math.floor(Math.random() * aircraftTypes.length)];
+        const origin = origins[Math.floor(Math.random() * origins.length)];
+        const destination = destinations[Math.floor(Math.random() * destinations.length)];
         
-        console.log(`✅ Flights sorted - closest flight is ${calculateDistance(lat, lon, apiFlights[0].latitude, apiFlights[0].longitude).toFixed(1)} miles away`);
-    }
-    
-    return apiFlights;
-}
-
-// Enhanced sample data generator
-let sampleFlightsCache = null;
-let lastSampleUpdate = 0;
-const SAMPLE_UPDATE_INTERVAL = 10000;
-
-function generateRealisticFlights(lat, lon, count = 4) {
-    if (sampleFlightsCache && (Date.now() - lastSampleUpdate) < SAMPLE_UPDATE_INTERVAL) {
-        return sampleFlightsCache;
-    }
-    
-    const airlines = ['UA', 'AA', 'DL', 'WN', 'AS', 'B6', 'F9', 'G4'];
-    const flights = Array.from({ length: count }, (_, i) => {
-        const airline = airlines[i % airlines.length];
-        const flightNum = Math.floor(100 + Math.random() * 900);
-        
-        return {
-            id: 'sample_' + i,
-            latitude: lat + (Math.random() - 0.5) * 0.2,
-            longitude: lon + (Math.random() - 0.5) * 0.2,
-            track: Math.floor(Math.random() * 360),
-            altitude: 28000 + (i * 2000) + Math.random() * 1000,
-            speed: 420 + (i * 20) + Math.random() * 40,
-            flight_number: airline + flightNum,
-            aircraft_type: 'Enhanced: ' + ['A320', 'B737', 'B738', 'A319'][i % 4],
-            callsign: airline + flightNum,
-            origin: 'DEN',
-            route: 'DEN → ' + ['ORD', 'LAX', 'JFK', 'SFO'][i % 4],
+        flights.push({
+            icao24: `a${Math.floor(Math.random() * 1000000).toString(16)}`,
+            callsign: flightNumber,
+            origin_country: 'United States',
+            time_position: Math.floor(Date.now() / 1000),
+            last_contact: Math.floor(Date.now() / 1000),
+            longitude: offsetLon,
+            latitude: offsetLat,
+            baro_altitude: Math.floor(Math.random() * 30000) + 10000,
+            on_ground: false,
+            velocity: Math.floor(Math.random() * 200) + 300,
+            true_track: Math.floor(Math.random() * 360),
+            vertical_rate: Math.floor(Math.random() * 1000) - 500,
+            sensors: null,
+            geo_altitude: Math.floor(Math.random() * 30000) + 10000,
+            squawk: null,
+            spi: false,
+            position_source: 1,
+            aircraft_type: aircraftType,
+            flight_number: flightNumber,
+            origin: origin,
+            destination: destination,
+            route: `${origin} → ${destination}`,
             airline: airline,
-            vertical_speed: Math.random() > 0.5 ? 500 + Math.random() * 1000 : -500 - Math.random() * 1000,
-        };
-    });
+            departure: origin,
+            arrival: destination
+        });
+    }
     
-    sampleFlightsCache = flights;
-    lastSampleUpdate = Date.now();
     return flights;
 }
 
-// API Routes
+// Fetch flights using FlightRadar24 API
+async function fetchFlights(lat, lon, radius, minAlt, maxAlt) {
+    try {
+        // Create bounding box from center point and radius
+        // Approximate 1 degree = 111 km, so radius in degrees = radius / 111
+        const radiusInDegrees = radius / 111;
+        const latMin = lat - radiusInDegrees;
+        const latMax = lat + radiusInDegrees;
+        const lonMin = lon - radiusInDegrees;
+        const lonMax = lon + radiusInDegrees;
+        
+        const flightRadarAPI = new FlightRadar24API();
+        const apiFlights = await flightRadarAPI.getFlightsInBounds(latMin, latMax, lonMin, lonMax);
+        
+        // Filter flights by altitude
+        const filteredFlights = apiFlights.filter(flight => {
+            // Filter out on-ground flights
+            if (flight.on_ground) return false;
+            
+            // Filter by altitude range
+            const altitude = flight.altitude || flight.baro_altitude || flight.geo_altitude;
+            if (altitude === undefined) return true; // If no altitude data, include it
+            
+            return altitude >= minAlt && altitude <= maxAlt;
+        });
+        
+        console.log(`🔍 Fetched ${apiFlights.length} flights, ${filteredFlights.length} after filtering`);
+        return filteredFlights;
+    } catch (error) {
+        console.error('❌ Error fetching flights:', error.message);
+        return [];
+    }
+}
+
+// Initialize config
+let config = loadConfig();
+app.get('/admin', (req, res) => {
+    console.log('Serving new admin interface');
+    res.sendFile(path.join(__dirname, '../admin/index.html'));
+});
+
+app.get('/admin-legacy', (req, res) => {
+    console.log('Serving legacy admin interface');
+    res.sendFile(path.join(__dirname, '../admin/index.html.backup'));
+});
+
 app.get('/admin/config', (req, res) => {
     res.json({ success: true, config });
+});
+
+app.get('/test', (req, res) => {
+    console.log('Test route called');
+    res.send('Test route working');
+});
+
+app.get('/admin/test', (req, res) => {
+    console.log('Admin test route called');
+    res.send('Admin test route working');
 });
 
 app.post('/admin/config', (req, res) => {
@@ -277,18 +264,19 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Serve admin panel HTML
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, '../admin/index.html'));
-});
-
 // Serve flight display HTML
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../html/index.html'));
 });
 
+// Serve static files from multiple directories
+app.use('/assets', express.static(path.join(__dirname, '../assets')));
+app.use('/api', express.static(path.join(__dirname, '../api')));
+app.use('/html', express.static(path.join(__dirname, '../html')));
+
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📊 Using FlightRadar24 API only (no OpenSky)`);
     console.log(`📍 Current location: ${config.home.latitude}, ${config.home.longitude}`);
+    console.log(`🔧 Route handlers registered: /admin, /admin-legacy, /test`);
 });

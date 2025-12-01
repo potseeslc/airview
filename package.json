@@ -1,6 +1,6 @@
 {
   "name": "airview",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Airview - A Docker-based web application for flight tracking display with FlightRadar24 API integration",
   "main": "backend/server.js",
   "scripts": {
